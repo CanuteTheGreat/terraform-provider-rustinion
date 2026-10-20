@@ -1,0 +1,48 @@
+# Builds, signs and publishes a release when a v* tag arrives. This
+# repository is a push mirror of git.canutethegreat.com/CanuteTheGreat/
+# terraform-provider-rustinion, which the Rustinion monorepo's CI keeps in
+# sync with its terraform-provider-rustinion/ directory and tags whenever
+# that directory's VERSION file changes (see RELEASING.md). The
+# Terraform Registry picks up each GitHub release (signed SHA256SUMS +
+# manifest) within minutes.
+#
+# Standard HashiCorp shape: https://developer.hashicorp.com/terraform/registry/providers/publishing
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: 'go.mod'
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd # v7.0.0
+        id: import_gpg
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+      - uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
+        with:
+          version: '~> v2'
+          args: release --clean
+        env:
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify the signature of the published checksums
+        run: |
+          v=${GITHUB_REF_NAME#v}
+          cd dist
+          gpg --verify "terraform-provider-rustinion_${v}_SHA256SUMS.sig" "terraform-provider-rustinion_${v}_SHA256SUMS"
+          sha256sum --check --ignore-missing "terraform-provider-rustinion_${v}_SHA256SUMS"

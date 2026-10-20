@@ -1,0 +1,9 @@
+/terraform-provider-rustinion
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+# goreleaser's own output directory (`goreleaser release`/`goreleaser
+# build`, see .goreleaser.yml and RELEASING.md) — build artifacts, never
+# committed.
+/dist/
