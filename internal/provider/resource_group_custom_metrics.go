@@ -20,7 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	"git.canutethegreat.com/CanuteTheGreat/rustinion/terraform-provider-rustinion/internal/client"
+	"github.com/CanuteTheGreat/terraform-provider-rustinion/internal/client"
 )
 
 var (

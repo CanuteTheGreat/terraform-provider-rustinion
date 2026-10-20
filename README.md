@@ -25,6 +25,7 @@ is just a Terraform-shaped client for it.
 | `rustinion_on_call_override` | `/api/v1/customer/on-call-schedules/:id/overrides[/:override_id]` |
 | `rustinion_group` | `/api/v1/customer/groups[/:id]` |
 | `rustinion_group_portable_policy` | `/api/v1/customer/groups/:id/portable` (per-group singleton) |
+| `rustinion_group_vm_snapshot_policy` | `/api/v1/customer/groups/:id/vm-snapshot-policy` (per-group singleton: snapshot a VM on its managed Proxmox VE / libvirt host before firmware and OS upgrades, on by default; Rustinion snapshots kept per VM, default 2) |
 | `rustinion_group_restart_policy` | `/api/v1/customer/groups/:id/restart-policy` (per-group singleton: windows, rings, max at once, drain/verify hooks, `ignored_services` as `policy_json`) |
 | `rustinion_group_alert_tuning` | `/api/v1/customer/groups/:id/alert-tuning` (per-group singleton) |
 | `rustinion_group_offline_alerts` | `/api/v1/customer/groups/:id/offline-alerts` (per-group singleton) |
@@ -52,7 +53,7 @@ Every resource supports create/read/update/delete and `terraform
 import <resource>.<name> <id>` (the server-assigned UUID) — with a few
 exceptions:
 - The `rustinion_group_*` settings resources (portable policy, restart
-  policy, alert tuning, offline alerts, host health, custom metrics) are per-group singletons: their
+  policy, alert tuning, offline alerts, host health, custom metrics, VM snapshot policy) are per-group singletons: their
   id and import id are the group id, creating one writes the settings,
   and destroying one puts the server defaults back.
 - `rustinion_status_page` is a singleton (exactly one status page per

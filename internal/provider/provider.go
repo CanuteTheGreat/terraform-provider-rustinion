@@ -135,6 +135,7 @@ func (p *RustinionProvider) Resources(_ context.Context) []func() resource.Resou
 		NewOnCallOverrideResource,
 		NewGroupResource,
 		NewGroupPortablePolicyResource,
+		NewGroupVMSnapshotPolicyResource,
 		NewGroupRestartPolicyResource,
 		NewGroupOfflineAlertsResource,
 		NewGroupHostHealthResource,

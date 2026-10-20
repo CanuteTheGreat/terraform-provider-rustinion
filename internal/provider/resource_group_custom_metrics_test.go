@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
-	"git.canutethegreat.com/CanuteTheGreat/rustinion/terraform-provider-rustinion/internal/client"
+	"github.com/CanuteTheGreat/terraform-provider-rustinion/internal/client"
 )
 
 func TestAccGroupCustomMetricsResource(t *testing.T) {

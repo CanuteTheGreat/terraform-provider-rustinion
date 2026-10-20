@@ -17,7 +17,7 @@ Manages a Rustinion notification channel (Slack, generic webhook, email, PagerDu
 
 ### Required
 
-- `channel_type` (String) One of: email, slack, webhook, pagerduty, opsgenie, sms, voice.
+- `channel_type` (String) One of: email, slack, webhook, pagerduty, opsgenie, sms, voice, ntfy.
 - `config` (String, Sensitive) The channel's config as a JSON string, shape depending on channel_type: slack: {"webhook_url": "..."}; webhook: {"url": "...", "secret": "..."} (secret optional); email: {"recipients": ["..."]}; pagerduty: {"routing_key": "..."}; opsgenie: {"api_key": "...", "region": "us"|"eu"} (region optional, defaults to us); sms/voice: {"account_sid": "...", "auth_token": "...", "from_number": "+1...", "to_numbers": ["+1..."]} (a real Twilio account — sms sends a text via Twilio's Messages API, voice places a call and reads the alert aloud via Twilio's Calls API). Marked sensitive since every shape but email holds a secret.
 - `name` (String)
 
