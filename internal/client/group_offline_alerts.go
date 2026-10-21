@@ -95,3 +95,48 @@ func (c *Client) PutGroupHostHealth(ctx context.Context, groupID string, p Group
 	}
 	return &out, nil
 }
+
+// GroupBuildHost mirrors `GET/PUT /api/v1/customer/groups/{id}/build-host`:
+// Build/CI host mode. When Enabled, web-process findings from ephemeral CI
+// job containers (runner job containers, containers a running job started
+// and labelled rustinion.ci.job, rootless containers of the runner user,
+// or names matching ContainerPatterns) are recorded as info and never
+// alert. Host-level events and untraceable containers still alert.
+type GroupBuildHost struct {
+	Enabled           bool     `json:"enabled"`
+	ContainerPatterns []string `json:"container_patterns"`
+}
+
+// DefaultGroupBuildHost: off, no patterns.
+func DefaultGroupBuildHost() GroupBuildHost {
+	return GroupBuildHost{Enabled: false, ContainerPatterns: []string{}}
+}
+
+func groupBuildHostPath(groupID string) string {
+	return fmt.Sprintf("/api/v1/customer/groups/%s/build-host", groupID)
+}
+
+func (c *Client) GetGroupBuildHost(ctx context.Context, groupID string) (*GroupBuildHost, error) {
+	var out GroupBuildHost
+	if err := c.do(ctx, http.MethodGet, groupBuildHostPath(groupID), nil, &out); err != nil {
+		return nil, err
+	}
+	if out.ContainerPatterns == nil {
+		out.ContainerPatterns = []string{}
+	}
+	return &out, nil
+}
+
+func (c *Client) PutGroupBuildHost(ctx context.Context, groupID string, p GroupBuildHost) (*GroupBuildHost, error) {
+	if p.ContainerPatterns == nil {
+		p.ContainerPatterns = []string{}
+	}
+	var out GroupBuildHost
+	if err := c.do(ctx, http.MethodPut, groupBuildHostPath(groupID), p, &out); err != nil {
+		return nil, err
+	}
+	if out.ContainerPatterns == nil {
+		out.ContainerPatterns = []string{}
+	}
+	return &out, nil
+}

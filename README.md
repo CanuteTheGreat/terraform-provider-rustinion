@@ -29,7 +29,9 @@ is just a Terraform-shaped client for it.
 | `rustinion_group_restart_policy` | `/api/v1/customer/groups/:id/restart-policy` (per-group singleton: windows, rings, max at once, drain/verify hooks, `ignored_services` as `policy_json`) |
 | `rustinion_group_alert_tuning` | `/api/v1/customer/groups/:id/alert-tuning` (per-group singleton) |
 | `rustinion_group_offline_alerts` | `/api/v1/customer/groups/:id/offline-alerts` (per-group singleton) |
+| `rustinion_group_notifications` | `/api/v1/customer/groups/:id/notifications` (per-group singleton: `normal`, `digest_only` = never pushed for any reason, still in the email digest, or `silent`) |
 | `rustinion_group_host_health` | `/api/v1/customer/groups/:id/host-health` (per-group singleton) |
+| `rustinion_group_build_host` | `/api/v1/customer/groups/:id/build-host` (per-group singleton: Build/CI host mode, CI job containers' web-process findings are info only; `container_patterns`) |
 | `rustinion_group_custom_metrics` | `/api/v1/customer/groups/:id/custom-metrics` (per-group singleton: the agent's DogStatsD/StatsD listener and Prometheus/OpenMetrics scrape targets) |
 | `rustinion_alert_routing` | `/api/v1/customer/alert-routing` (organization singleton: severities per destination - email, digest webhook/ntfy, PagerDuty - ntfy priority per severity, digest hour and time zone; push destinations default to critical only) |
 | `rustinion_group_package_cleanup` | `/api/v1/customer/groups/:id/package-cleanup` (per-group singleton: remove unneeded packages / old kernels, on by default) |
@@ -55,7 +57,7 @@ Every resource supports create/read/update/delete and `terraform
 import <resource>.<name> <id>` (the server-assigned UUID) — with a few
 exceptions:
 - The `rustinion_group_*` settings resources (portable policy, restart
-  policy, alert tuning, offline alerts, host health, custom metrics, VM snapshot policy) are per-group singletons: their
+  policy, alert tuning, offline alerts, notifications, host health, custom metrics, VM snapshot policy) are per-group singletons: their
   id and import id are the group id, creating one writes the settings,
   and destroying one puts the server defaults back.
 - `rustinion_status_page` is a singleton (exactly one status page per
