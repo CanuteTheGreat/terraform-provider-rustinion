@@ -5,12 +5,14 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -41,6 +43,7 @@ type groupPortablePolicyResourceModel struct {
 	PortableDevices   types.Bool   `tfsdk:"portable_devices"`
 	PortableGraceDays types.Int64  `tfsdk:"portable_grace_days"`
 	AsleepGraceHours  types.Int64  `tfsdk:"asleep_grace_hours"`
+	AutoMarkPortable  types.String `tfsdk:"auto_mark_portable"`
 }
 
 func (r *groupPortablePolicyResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -85,6 +88,13 @@ func (r *groupPortablePolicyResource) Schema(_ context.Context, _ resource.Schem
 				MarkdownDescription: "Hours a device that announced sleep or shutdown shows as Asleep without stale alerts, 1-336. Default 48.",
 				Validators:          []validator.Int64{int64validator.Between(1, 336)},
 			},
+			"auto_mark_portable": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString(client.DefaultGroupPortablePolicy.AutoMarkPortable),
+				MarkdownDescription: "What to do with devices that look portable (laptop chassis or battery, GL.iNet travel routers, Wi-Fi-client / tethered / cellular uplinks, frequently changing networks): `suggest` (default: a one-click suggestion on the device page, device list and compliance report; nothing changes), `auto` (mark them Portable automatically, audit-logged, never over a device explicitly set to Off) or `off` (no suggestions).",
+				Validators:          []validator.String{stringvalidator.OneOf("suggest", "auto", "off")},
+			},
 		},
 	}
 }
@@ -112,6 +122,9 @@ func groupPortablePolicyToClient(m groupPortablePolicyResourceModel) client.Grou
 	if !m.AsleepGraceHours.IsNull() && !m.AsleepGraceHours.IsUnknown() {
 		p.AsleepGraceHours = m.AsleepGraceHours.ValueInt64()
 	}
+	if !m.AutoMarkPortable.IsNull() && !m.AutoMarkPortable.IsUnknown() {
+		p.AutoMarkPortable = m.AutoMarkPortable.ValueString()
+	}
 	return p
 }
 
@@ -122,7 +135,16 @@ func groupPortablePolicyFromClient(groupID string, p *client.GroupPortablePolicy
 		PortableDevices:   types.BoolValue(p.PortableDevices),
 		PortableGraceDays: types.Int64Value(p.PortableGraceDays),
 		AsleepGraceHours:  types.Int64Value(p.AsleepGraceHours),
+		AutoMarkPortable:  types.StringValue(autoMarkOrDefault(p.AutoMarkPortable)),
 	}
+}
+
+// autoMarkOrDefault: servers older than the setting don't return it.
+func autoMarkOrDefault(v string) string {
+	if v == "" {
+		return client.DefaultGroupPortablePolicy.AutoMarkPortable
+	}
+	return v
 }
 
 func (r *groupPortablePolicyResource) put(ctx context.Context, m groupPortablePolicyResourceModel) (*groupPortablePolicyResourceModel, error) {

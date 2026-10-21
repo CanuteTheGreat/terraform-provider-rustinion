@@ -24,8 +24,8 @@ Manages a Rustinion log-based alert rule: fires when at least threshold_count ma
 
 - `enabled` (Boolean)
 - `escalation_policy_id` (String) Escalation policy to notify when this rule fires, in the same group. Omit for none.
-- `log_severity` (String) Restrict matching to "error" or "warning" log lines. Omit for no severity filter.
-- `log_source` (String) Restrict matching to one source: "journal", "windows_event", or "macos_unified". Omit for no source filter.
+- `log_severity` (String) Match log lines at this severity or worse: emergency, alert, critical, error, warning, notice, info, debug. Omit for no severity filter.
+- `log_source` (String) Restrict matching to one source: journal, kernel, windows_event, macos_unified, syslog, file, container, otlp, datadog, datadog-service-check, datadog-event, panic. Omit for no source filter.
 - `message_pattern` (String) Substring/pattern a log line's message must contain to match. Omit for no message filter.
 - `severity` (String)
 - `threshold_count` (Number) Matching log lines required within window_minutes before the rule fires. Defaults to 1.

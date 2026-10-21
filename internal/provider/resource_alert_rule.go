@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -70,6 +71,8 @@ type alertRuleResourceModel struct {
 	ClearsToResolve    types.Int64               `tfsdk:"clears_to_resolve"`
 	Enabled            types.Bool                `tfsdk:"enabled"`
 	EscalationPolicyID types.String              `tfsdk:"escalation_policy_id"`
+	ScopeTag           types.String              `tfsdk:"scope_tag"`
+	MultiAlert         types.Bool                `tfsdk:"multi_alert"`
 	Condition          []alertRuleConditionModel `tfsdk:"condition"`
 }
 
@@ -134,6 +137,19 @@ func (r *alertRuleResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Optional:            true,
 				MarkdownDescription: "Escalation policy to notify when this rule fires, in the same group. Omit for none.",
 			},
+			"scope_tag": schema.StringAttribute{
+				Optional:            true,
+				MarkdownDescription: "Only devices carrying this host tag (e.g. `role:web`, from the admin panel or the agent's `agent.yaml`) are evaluated for host metrics (CPU/memory/disk/checkin freshness) and custom metrics; the rule's alert carries the tag so tag-scoped notification routes and silences match it. Lowercase letters, digits and `_ . : / -`. Omit for every device of the group.",
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(regexp.MustCompile(`^[a-z0-9_.:/-]{1,64}$`), "must be 1-64 lowercase letters, digits or _ . : / -"),
+				},
+			},
+			"multi_alert": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(false),
+				MarkdownDescription: "Evaluate the rule per device (Datadog multi-alert): one state and one alert per host instead of one aggregate for the group. Only threshold conditions on device metrics (cpu_avg_pct, mem_avg_pct, disk_avg_pct, checkin_freshness_pct, custom:<name>) and composite conditions.",
+			},
 		},
 		Blocks: map[string]schema.Block{
 			"condition": schema.ListNestedBlock{
@@ -148,7 +164,7 @@ func (r *alertRuleResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 							Optional:   true,
 							Computed:   true,
 							Default:    stringdefault.StaticString("threshold"),
-							Validators: []validator.String{stringvalidator.OneOf("threshold", "anomaly", "forecast", "composite", "slo_burn_rate_multi_window")},
+							Validators: []validator.String{stringvalidator.OneOf("threshold", "anomaly", "forecast", "composite", "slo_burn_rate_multi_window", "no_data")},
 						},
 						"comparator": schema.StringAttribute{
 							Required:            true,
@@ -289,11 +305,16 @@ func alertRuleToClient(m alertRuleResourceModel) client.AlertRule {
 		BreachesToFire:  m.BreachesToFire.ValueInt64(),
 		ClearsToResolve: m.ClearsToResolve.ValueInt64(),
 		Enabled:         m.Enabled.ValueBool(),
+		MultiAlert:      m.MultiAlert.ValueBool(),
 		Conditions:      conditions,
 	}
 	if !m.EscalationPolicyID.IsNull() {
 		v := m.EscalationPolicyID.ValueString()
 		rule.EscalationPolicyID = &v
+	}
+	if !m.ScopeTag.IsNull() && m.ScopeTag.ValueString() != "" {
+		v := m.ScopeTag.ValueString()
+		rule.ScopeTag = &v
 	}
 	return rule
 }
@@ -364,6 +385,8 @@ func alertRuleFromClient(rule *client.AlertRule) alertRuleResourceModel {
 		ClearsToResolve:    types.Int64Value(rule.ClearsToResolve),
 		Enabled:            types.BoolValue(rule.Enabled),
 		EscalationPolicyID: types.StringPointerValue(rule.EscalationPolicyID),
+		ScopeTag:           types.StringPointerValue(rule.ScopeTag),
+		MultiAlert:         types.BoolValue(rule.MultiAlert),
 		Condition:          conditions,
 	}
 }

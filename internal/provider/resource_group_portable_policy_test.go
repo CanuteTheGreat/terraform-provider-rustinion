@@ -28,10 +28,12 @@ resource "rustinion_group_portable_policy" "test" {
   group_id            = %q
   portable_devices    = true
   portable_grace_days = 21
+  auto_mark_portable  = "auto"
 }
 `, groupID),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("rustinion_group_portable_policy.test", "id", groupID),
+					resource.TestCheckResourceAttr("rustinion_group_portable_policy.test", "auto_mark_portable", "auto"),
 					resource.TestCheckResourceAttr("rustinion_group_portable_policy.test", "portable_devices", "true"),
 					resource.TestCheckResourceAttr("rustinion_group_portable_policy.test", "portable_grace_days", "21"),
 					resource.TestCheckResourceAttr("rustinion_group_portable_policy.test", "asleep_grace_hours", "48"),
@@ -54,6 +56,7 @@ resource "rustinion_group_portable_policy" "test" {
 					resource.TestCheckResourceAttr("rustinion_group_portable_policy.test", "portable_devices", "false"),
 					resource.TestCheckResourceAttr("rustinion_group_portable_policy.test", "portable_grace_days", "14"),
 					resource.TestCheckResourceAttr("rustinion_group_portable_policy.test", "asleep_grace_hours", "24"),
+					resource.TestCheckResourceAttr("rustinion_group_portable_policy.test", "auto_mark_portable", "suggest"),
 				),
 			},
 		},
@@ -83,7 +86,7 @@ func TestGroupPortablePolicyToClientFillsDefaults(t *testing.T) {
 		PortableGraceDays: types.Int64Unknown(),
 		AsleepGraceHours:  types.Int64Null(),
 	})
-	want := client.GroupPortablePolicy{PortableDevices: true, PortableGraceDays: 14, AsleepGraceHours: 48}
+	want := client.GroupPortablePolicy{PortableDevices: true, PortableGraceDays: 14, AsleepGraceHours: 48, AutoMarkPortable: "suggest"}
 	if p != want {
 		t.Fatalf("got %+v, want %+v", p, want)
 	}
@@ -102,27 +105,37 @@ func TestGroupPortablePolicyClientRoundTrip(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"group_id": "g1", "portable_devices": true, "portable_grace_days": 30, "asleep_grace_hours": 12,
+			"auto_mark_portable": "off",
 		})
 	}))
 	defer server.Close()
 
 	c := client.New(server.URL, "k")
 	saved, err := c.PutGroupPortablePolicy(context.Background(), "g1",
-		client.GroupPortablePolicy{PortableDevices: true, PortableGraceDays: 30, AsleepGraceHours: 12})
+		client.GroupPortablePolicy{PortableDevices: true, PortableGraceDays: 30, AsleepGraceHours: 12, AutoMarkPortable: "off"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if gotMethod != http.MethodPut || gotPath != "/api/v1/customer/groups/g1/portable" {
 		t.Fatalf("got %s %s", gotMethod, gotPath)
 	}
-	if gotBody["portable_grace_days"] != float64(30) || gotBody["portable_devices"] != true {
+	if gotBody["portable_grace_days"] != float64(30) || gotBody["portable_devices"] != true || gotBody["auto_mark_portable"] != "off" {
 		t.Fatalf("body %v", gotBody)
 	}
 	m := groupPortablePolicyFromClient("g1", saved)
-	if m.ID.ValueString() != "g1" || m.AsleepGraceHours.ValueInt64() != 12 || !m.PortableDevices.ValueBool() {
+	if m.ID.ValueString() != "g1" || m.AsleepGraceHours.ValueInt64() != 12 || !m.PortableDevices.ValueBool() || m.AutoMarkPortable.ValueString() != "off" {
 		t.Fatalf("model %+v", m)
 	}
 	if _, err := c.GetGroupPortablePolicy(context.Background(), "g1"); err != nil || gotMethod != http.MethodGet {
 		t.Fatalf("get: %v %s", err, gotMethod)
+	}
+}
+
+// A server that predates auto_mark_portable answers without it: the
+// model reads it as the default instead of an empty string (no diff).
+func TestGroupPortablePolicyFromAnOlderServer(t *testing.T) {
+	m := groupPortablePolicyFromClient("g1", &client.GroupPortablePolicy{PortableGraceDays: 14, AsleepGraceHours: 48})
+	if m.AutoMarkPortable.ValueString() != "suggest" {
+		t.Fatalf("got %q", m.AutoMarkPortable.ValueString())
 	}
 }

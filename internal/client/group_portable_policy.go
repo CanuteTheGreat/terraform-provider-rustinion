@@ -16,6 +16,11 @@ type GroupPortablePolicy struct {
 	PortableDevices   bool  `json:"portable_devices"`
 	PortableGraceDays int64 `json:"portable_grace_days"`
 	AsleepGraceHours  int64 `json:"asleep_grace_hours"`
+	// AutoMarkPortable: what to do with devices that look portable
+	// (laptops, GL.iNet travel routers, Wi-Fi-client / tethered / cellular
+	// uplinks, frequently changing networks): "suggest" (default), "auto"
+	// or "off". Empty = not sent (the server keeps its value).
+	AutoMarkPortable string `json:"auto_mark_portable,omitempty"`
 }
 
 // Defaults the server applies to a group that never set these.
@@ -23,6 +28,7 @@ var DefaultGroupPortablePolicy = GroupPortablePolicy{
 	PortableDevices:   false,
 	PortableGraceDays: 14,
 	AsleepGraceHours:  48,
+	AutoMarkPortable:  "suggest",
 }
 
 func groupPortablePath(groupID string) string {

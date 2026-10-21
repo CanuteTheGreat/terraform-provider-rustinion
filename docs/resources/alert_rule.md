@@ -28,6 +28,8 @@ Manages a Rustinion alert rule: an AND/OR combination of metric conditions, eval
 - `condition` (Block List) One metric condition. A rule with no conditions never breaches. (see [below for nested schema](#nestedblock--condition))
 - `enabled` (Boolean)
 - `escalation_policy_id` (String) Escalation policy to notify when this rule fires, in the same group. Omit for none.
+- `multi_alert` (Boolean) Evaluate the rule per device (Datadog multi-alert): one state and one alert per host instead of one aggregate for the group. Only threshold conditions on device metrics (cpu_avg_pct, mem_avg_pct, disk_avg_pct, checkin_freshness_pct, custom:<name>) and composite conditions.
+- `scope_tag` (String) Only devices carrying this host tag (e.g. `role:web`, from the admin panel or the agent's `agent.yaml`) are evaluated for host metrics (CPU/memory/disk/checkin freshness) and custom metrics; the rule's alert carries the tag so tag-scoped notification routes and silences match it. Lowercase letters, digits and `_ . : / -`. Omit for every device of the group.
 - `severity` (String)
 
 ### Read-Only

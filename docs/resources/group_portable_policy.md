@@ -22,6 +22,7 @@ Manages a group's portable-device policy. Portable devices (laptops, travel mach
 ### Optional
 
 - `asleep_grace_hours` (Number) Hours a device that announced sleep or shutdown shows as Asleep without stale alerts, 1-336. Default 48.
+- `auto_mark_portable` (String) What to do with devices that look portable (laptop chassis or battery, GL.iNet travel routers, Wi-Fi-client / tethered / cellular uplinks, frequently changing networks): `suggest` (default: a one-click suggestion on the device page, device list and compliance report; nothing changes), `auto` (mark them Portable automatically, audit-logged, never over a device explicitly set to Off) or `off` (no suggestions).
 - `portable_devices` (Boolean) Devices in this group are portable by default.
 - `portable_grace_days` (Number) Days a portable device may be away before its one notice, 1-365. Default 14.
 

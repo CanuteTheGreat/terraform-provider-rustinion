@@ -66,16 +66,20 @@ type AlertRuleCondition struct {
 // response) — a single struct for both, since the request/response
 // shapes only differ by `ID` being empty on the way in.
 type AlertRule struct {
-	ID                 string               `json:"id,omitempty"`
-	GroupID            string               `json:"group_id"`
-	Name               string               `json:"name"`
-	BoolOp             string               `json:"bool_op"`
-	Severity           string               `json:"severity"`
-	BreachesToFire     int64                `json:"breaches_to_fire"`
-	ClearsToResolve    int64                `json:"clears_to_resolve"`
-	Enabled            bool                 `json:"enabled"`
-	EscalationPolicyID *string              `json:"escalation_policy_id,omitempty"`
-	Conditions         []AlertRuleCondition `json:"conditions"`
+	ID                 string  `json:"id,omitempty"`
+	GroupID            string  `json:"group_id"`
+	Name               string  `json:"name"`
+	BoolOp             string  `json:"bool_op"`
+	Severity           string  `json:"severity"`
+	BreachesToFire     int64   `json:"breaches_to_fire"`
+	ClearsToResolve    int64   `json:"clears_to_resolve"`
+	Enabled            bool    `json:"enabled"`
+	EscalationPolicyID *string `json:"escalation_policy_id,omitempty"`
+	MultiAlert         bool    `json:"multi_alert"`
+	// ScopeTag limits host and custom metrics to devices carrying this
+	// host tag (e.g. "role:web"); nil = every device of the group.
+	ScopeTag   *string              `json:"scope_tag,omitempty"`
+	Conditions []AlertRuleCondition `json:"conditions"`
 }
 
 func (c *Client) CreateAlertRule(ctx context.Context, rule AlertRule) (*AlertRule, error) {

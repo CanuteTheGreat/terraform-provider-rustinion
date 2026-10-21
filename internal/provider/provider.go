@@ -116,6 +116,7 @@ func (p *RustinionProvider) Configure(ctx context.Context, req provider.Configur
 func (p *RustinionProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewAlertRuleResource,
+		NewAlertDependencyResource,
 		NewNotificationChannelResource,
 		NewNotificationRouteResource,
 		NewDashboardResource,
@@ -142,6 +143,8 @@ func (p *RustinionProvider) Resources(_ context.Context) []func() resource.Resou
 		NewGroupCustomMetricsResource,
 		NewAlertRoutingResource,
 		NewGroupPackageCleanupResource,
+		NewGroupLogCollectionResource,
+		NewDeviceLogCollectionResource,
 		NewDevicePackageCleanupResource,
 		NewGroupMalwareScanResource,
 		NewMalwareAllowlistRuleResource,
@@ -159,6 +162,9 @@ func (p *RustinionProvider) Resources(_ context.Context) []func() resource.Resou
 		NewPermissionRoleResource,
 		NewPermissionRoleAssignmentResource,
 		NewPermissionRoleMappingResource,
+		NewMonitorTemplateResource,
+		NewMonitorTemplateLinkResource,
+		NewMonitorMacroOverrideResource,
 	}
 }
 
@@ -172,5 +178,6 @@ func (p *RustinionProvider) Resources(_ context.Context) []func() resource.Resou
 func (p *RustinionProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewProcessWatchRulesDataSource,
+		NewMonitorTemplateDataSource,
 	}
 }

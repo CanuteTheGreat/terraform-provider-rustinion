@@ -24,7 +24,7 @@ is just a Terraform-shaped client for it.
 | `rustinion_on_call_schedule` | `/api/v1/customer/on-call-schedules[/:id]` |
 | `rustinion_on_call_override` | `/api/v1/customer/on-call-schedules/:id/overrides[/:override_id]` |
 | `rustinion_group` | `/api/v1/customer/groups[/:id]` |
-| `rustinion_group_portable_policy` | `/api/v1/customer/groups/:id/portable` (per-group singleton) |
+| `rustinion_group_portable_policy` | `/api/v1/customer/groups/:id/portable` (per-group singleton: portable by default, away/asleep grace, `auto_mark_portable` = suggest / auto / off for devices that look portable) |
 | `rustinion_group_vm_snapshot_policy` | `/api/v1/customer/groups/:id/vm-snapshot-policy` (per-group singleton: snapshot a VM on its managed Proxmox VE / libvirt host before firmware and OS upgrades, on by default; Rustinion snapshots kept per VM, default 2) |
 | `rustinion_group_restart_policy` | `/api/v1/customer/groups/:id/restart-policy` (per-group singleton: windows, rings, max at once, drain/verify hooks, `ignored_services` as `policy_json`) |
 | `rustinion_group_alert_tuning` | `/api/v1/customer/groups/:id/alert-tuning` (per-group singleton) |
@@ -33,6 +33,8 @@ is just a Terraform-shaped client for it.
 | `rustinion_group_custom_metrics` | `/api/v1/customer/groups/:id/custom-metrics` (per-group singleton: the agent's DogStatsD/StatsD listener and Prometheus/OpenMetrics scrape targets) |
 | `rustinion_alert_routing` | `/api/v1/customer/alert-routing` (organization singleton: severities per destination - email, digest webhook/ntfy, PagerDuty - ntfy priority per severity, digest hour and time zone; push destinations default to critical only) |
 | `rustinion_group_package_cleanup` | `/api/v1/customer/groups/:id/package-cleanup` (per-group singleton: remove unneeded packages / old kernels, on by default) |
+| `rustinion_group_log_collection` | `/api/v1/customer/groups/:id/log-collection` (per-group singleton: device log collection on/off, severity, Windows channels, app log files, containers, syslog receiver, rate limit and buffer as `settings_json`) |
+| `rustinion_device_log_collection` | `/api/v1/customer/devices/:id/log-collection` (per-device override of the group's log collection, `settings_json`; `null`/destroy = inherit) |
 | `rustinion_device_package_cleanup` | `/api/v1/customer/devices/:id/package-cleanup` (per-device on / off / inherit) |
 | `rustinion_group_malware_scan` | `/api/v1/customer/groups/:id/malware-scan` (per-group singleton: signatures-only and excluded scan paths) |
 | `rustinion_malware_allowlist_rule` | `/api/v1/customer/malware-allowlist` (fleet-wide false positive: signature + path pattern) |

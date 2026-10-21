@@ -83,13 +83,13 @@ func (r *logAlertRuleResource) Schema(_ context.Context, _ resource.SchemaReques
 			},
 			"log_severity": schema.StringAttribute{
 				Optional:            true,
-				MarkdownDescription: "Restrict matching to \"error\" or \"warning\" log lines. Omit for no severity filter.",
-				Validators:          []validator.String{stringvalidator.OneOf("error", "warning")},
+				MarkdownDescription: "Match log lines at this severity or worse: emergency, alert, critical, error, warning, notice, info, debug. Omit for no severity filter.",
+				Validators:          []validator.String{stringvalidator.OneOf("emergency", "alert", "critical", "error", "warning", "notice", "info", "debug")},
 			},
 			"log_source": schema.StringAttribute{
 				Optional:            true,
-				MarkdownDescription: "Restrict matching to one source: \"journal\", \"windows_event\", or \"macos_unified\". Omit for no source filter.",
-				Validators:          []validator.String{stringvalidator.OneOf("journal", "windows_event", "macos_unified")},
+				MarkdownDescription: "Restrict matching to one source: journal, kernel, windows_event, macos_unified, syslog, file, container, otlp, datadog, datadog-service-check, datadog-event, panic. Omit for no source filter.",
+				Validators:          []validator.String{stringvalidator.OneOf("journal", "kernel", "windows_event", "macos_unified", "syslog", "file", "container", "otlp", "datadog", "datadog-service-check", "datadog-event", "panic")},
 			},
 			"unit_pattern": schema.StringAttribute{
 				Optional:            true,
