@@ -148,6 +148,7 @@ func (p *RustinionProvider) Resources(_ context.Context) []func() resource.Resou
 		NewGroupLogCollectionResource,
 		NewDeviceLogCollectionResource,
 		NewDevicePackageCleanupResource,
+		NewDeviceAgentUpdateResource,
 		NewDeviceDisplayNameResource,
 		NewGroupMalwareScanResource,
 		NewMalwareAllowlistRuleResource,

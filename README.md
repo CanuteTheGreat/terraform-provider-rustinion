@@ -38,6 +38,7 @@ is just a Terraform-shaped client for it.
 | `rustinion_group_log_collection` | `/api/v1/customer/groups/:id/log-collection` (per-group singleton: device log collection on/off, severity, Windows channels, app log files, containers, syslog receiver, rate limit and buffer as `settings_json`) |
 | `rustinion_device_log_collection` | `/api/v1/customer/devices/:id/log-collection` (per-device override of the group's log collection, `settings_json`; `null`/destroy = inherit) |
 | `rustinion_device_package_cleanup` | `/api/v1/customer/devices/:id/package-cleanup` (per-device on / off / inherit) |
+| `rustinion_device_agent_update` | `/api/v1/customer/devices/:id/agent-update` (one device's agent self-update: `follow_group`, `auto`, `paused`, or `pinned` + `pinned_version`; destroy = follow_group) |
 | `rustinion_group_malware_scan` | `/api/v1/customer/groups/:id/malware-scan` (per-group singleton: signatures-only and excluded scan paths) |
 | `rustinion_malware_allowlist_rule` | `/api/v1/customer/malware-allowlist` (fleet-wide false positive: signature + path pattern) |
 | `rustinion_slo` | `/api/v1/customer/slos[/:id]` |
