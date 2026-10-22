@@ -32,6 +32,7 @@ is just a Terraform-shaped client for it.
 | `rustinion_group_notifications` | `/api/v1/customer/groups/:id/notifications` (per-group singleton: `normal`, `digest_only` = never pushed for any reason, still in the email digest, or `silent`) |
 | `rustinion_group_host_health` | `/api/v1/customer/groups/:id/host-health` (per-group singleton) |
 | `rustinion_group_build_host` | `/api/v1/customer/groups/:id/build-host` (per-group singleton: Build/CI host mode, CI job containers' web-process findings are info only; `container_patterns`) |
+| `rustinion_group_terminal_services` | `/api/v1/customer/groups/:id/terminal-services` (per-group singleton: expected terminal services - browser terminals whose shells are info only; `builtins` from the suggested list, `custom` entries matched by program path and arguments) |
 | `rustinion_group_custom_metrics` | `/api/v1/customer/groups/:id/custom-metrics` (per-group singleton: the agent's DogStatsD/StatsD listener and Prometheus/OpenMetrics scrape targets) |
 | `rustinion_alert_routing` | `/api/v1/customer/alert-routing` (organization singleton: severities per destination - email, digest webhook/ntfy, PagerDuty - ntfy priority per severity, digest hour and time zone; push destinations default to critical only) |
 | `rustinion_group_package_cleanup` | `/api/v1/customer/groups/:id/package-cleanup` (per-group singleton: remove unneeded packages / old kernels, on by default) |

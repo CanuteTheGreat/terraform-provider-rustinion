@@ -142,6 +142,7 @@ func (p *RustinionProvider) Resources(_ context.Context) []func() resource.Resou
 		NewGroupNotificationsResource,
 		NewGroupHostHealthResource,
 		NewGroupBuildHostResource,
+		NewGroupTerminalServicesResource,
 		NewGroupCustomMetricsResource,
 		NewAlertRoutingResource,
 		NewGroupPackageCleanupResource,
