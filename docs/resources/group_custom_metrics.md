@@ -43,7 +43,22 @@ Required:
 
 Optional:
 
+- `auth` (Attributes) Authentication and TLS options for this endpoint, e.g. a Horcrux `/metrics` on :8006: a bearer token or an `X-API-Key` header plus the instance's CA certificate. Omit for an open endpoint. (see [below for nested schema](#nestedatt--scrape_targets--auth))
 - `interval_secs` (Number) Scrape interval, 10-3600 seconds. Default 60.
 - `max_series` (Number) Series kept per scrape (1-2000); the rest are counted as skipped on the device page. Default 200.
 - `namespace` (String) Prefix for the stored names (`<namespace>_<name>`): lowercase letters, digits, underscore, up to 30.
 - `tags` (Map of String) Fixed tags added to every series of this target (label tags win), at most 8.
+
+<a id="nestedatt--scrape_targets--auth"></a>
+### Nested Schema for `scrape_targets.auth`
+
+Optional:
+
+- `basic_auth_password` (String, Sensitive) HTTP Basic auth password. Stored encrypted, never returned.
+- `basic_auth_username` (String) HTTP Basic auth user name (no colon). Not combinable with `bearer_token`.
+- `bearer_token` (String, Sensitive) Sent as `Authorization: Bearer <token>` (for Horcrux: a JWT; a Horcrux API key goes in `headers` as `X-API-Key`). Stored encrypted, never returned. Not combinable with Basic auth.
+- `headers` (Map of String, Sensitive) Extra request headers (name => value). The values are secrets: stored encrypted, never returned by the API or shown in the UI.
+- `tls_ca_pem` (String) PEM certificate(s) of a private CA to trust *instead of* the system roots, for endpoints with a private or self-signed CA (for Horcrux: its `/api/tls/ca.pem`). Preferred over `tls_insecure_skip_verify`. https URLs only.
+- `tls_client_cert_pem` (String) Client certificate (PEM) for mutual TLS. Needs `tls_client_key_pem`.
+- `tls_client_key_pem` (String, Sensitive) Private key (PEM) of the client certificate. Stored encrypted, never returned. PKCS#8 (`BEGIN PRIVATE KEY`) is accepted everywhere; relayed checks and scrape targets also accept RSA/EC keys.
+- `tls_insecure_skip_verify` (Boolean) **Insecure.** Do not verify the server certificate at all: anyone on the network path can impersonate the endpoint and read the credentials sent to it. Use `tls_ca_pem` instead where you can. Not combinable with `tls_ca_pem`. Default false.

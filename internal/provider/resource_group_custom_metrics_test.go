@@ -130,7 +130,7 @@ func TestGroupCustomMetricsClientRoundTrip(t *testing.T) {
 	if list, ok := bodies[0]["scrape_targets"].([]any); !ok || len(list) != 0 {
 		t.Fatalf("no targets must be sent as [] (absent would keep the old list): %v", bodies[0])
 	}
-	m, diags := groupCustomMetricsFromClient(ctx, "g1", saved)
+	m, diags := groupCustomMetricsFromClient(ctx, "g1", saved, nil)
 	if diags.HasError() {
 		t.Fatal(diags)
 	}

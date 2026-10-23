@@ -38,12 +38,13 @@ type groupCustomMetricsResource struct {
 }
 
 type scrapeTargetModel struct {
-	URL          types.String `tfsdk:"url"`
-	Metrics      types.List   `tfsdk:"metrics"`
-	Namespace    types.String `tfsdk:"namespace"`
-	IntervalSecs types.Int64  `tfsdk:"interval_secs"`
-	MaxSeries    types.Int64  `tfsdk:"max_series"`
-	Tags         types.Map    `tfsdk:"tags"`
+	URL          types.String   `tfsdk:"url"`
+	Metrics      types.List     `tfsdk:"metrics"`
+	Namespace    types.String   `tfsdk:"namespace"`
+	IntervalSecs types.Int64    `tfsdk:"interval_secs"`
+	MaxSeries    types.Int64    `tfsdk:"max_series"`
+	Tags         types.Map      `tfsdk:"tags"`
+	Auth         *httpAuthModel `tfsdk:"auth"`
 }
 
 type groupCustomMetricsModel struct {
@@ -150,6 +151,11 @@ func (r *groupCustomMetricsResource) Schema(_ context.Context, _ resource.Schema
 							ElementType:         types.StringType,
 							MarkdownDescription: "Fixed tags added to every series of this target (label tags win), at most 8.",
 						},
+						"auth": schema.SingleNestedAttribute{
+							Optional:            true,
+							Attributes:          httpAuthAttributes(),
+							MarkdownDescription: "Authentication and TLS options for this endpoint, e.g. a Horcrux `/metrics` on :8006: a bearer token or an `X-API-Key` header plus the instance's CA certificate. Omit for an open endpoint.",
+						},
 					},
 				},
 			},
@@ -204,12 +210,18 @@ func groupCustomMetricsToClient(ctx context.Context, m groupCustomMetricsModel) 
 		if !t.Tags.IsNull() && !t.Tags.IsUnknown() {
 			diags.Append(t.Tags.ElementsAs(ctx, &st.Tags, false)...)
 		}
+		auth, d := httpAuthToClient(ctx, t.Auth)
+		diags.Append(d...)
+		st.HTTPAuth = auth
 		p.ScrapeTargets = append(p.ScrapeTargets, st)
 	}
 	return p, diags
 }
 
-func groupCustomMetricsFromClient(ctx context.Context, groupID string, p *client.GroupCustomMetrics) (groupCustomMetricsModel, diag.Diagnostics) {
+// groupCustomMetricsFromClient builds the state from the server's answer.
+// `prior` (plan or state, may be nil) supplies the secret values the server
+// never returns.
+func groupCustomMetricsFromClient(ctx context.Context, groupID string, p *client.GroupCustomMetrics, prior *groupCustomMetricsModel) (groupCustomMetricsModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	m := groupCustomMetricsModel{
 		ID:                types.StringValue(groupID),
@@ -245,6 +257,18 @@ func groupCustomMetricsFromClient(ctx context.Context, groupID string, p *client
 			diags.Append(d...)
 			tm.Tags = tags
 		}
+		var priorAuth *httpAuthModel
+		if prior != nil {
+			for _, pt := range prior.ScrapeTargets {
+				if pt.URL.ValueString() == t.URL {
+					priorAuth = pt.Auth
+					break
+				}
+			}
+		}
+		auth, d := httpAuthFromClient(ctx, &t.HTTPAuth, priorAuth)
+		diags.Append(d...)
+		tm.Auth = auth
 		m.ScrapeTargets = append(m.ScrapeTargets, tm)
 	}
 	return m, diags
@@ -261,7 +285,7 @@ func (r *groupCustomMetricsResource) put(ctx context.Context, m groupCustomMetri
 		diags.AddError("Error saving group custom metrics settings", err.Error())
 		return nil, diags
 	}
-	out, d := groupCustomMetricsFromClient(ctx, groupID, saved)
+	out, d := groupCustomMetricsFromClient(ctx, groupID, saved, &m)
 	diags.Append(d...)
 	return &out, diags
 }
@@ -299,7 +323,7 @@ func (r *groupCustomMetricsResource) Read(ctx context.Context, req resource.Read
 		resp.Diagnostics.AddError("Error reading group custom metrics settings", err.Error())
 		return
 	}
-	m, diags := groupCustomMetricsFromClient(ctx, groupID, p)
+	m, diags := groupCustomMetricsFromClient(ctx, groupID, p, &state)
 	resp.Diagnostics.Append(diags...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, m)...)
 }

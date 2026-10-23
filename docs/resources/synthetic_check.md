@@ -32,6 +32,7 @@ Manages a Rustinion synthetic (uptime) check: a single HTTP(S) or TCP request, a
 - `expected_status_max` (Number)
 - `expected_status_min` (Number)
 - `failures_before_alert` (Number) Alert only after this many failed runs in a row, 1-10. Default 1 (the first failure).
+- `http_auth` (Attributes) check_type = "http" only: authentication and TLS options sent with every request (custom headers, bearer token or Basic auth, a custom CA certificate, a client certificate, or the explicit insecure skip-verify switch). Secrets are stored encrypted and never returned by the API. Credentials stay with the check's URL host: changing the target to another host drops credentials that are not re-sent. Relay checks need agent 0.1.257 or newer. (see [below for nested schema](#nestedatt--http_auth))
 - `http_method` (String)
 - `interval_seconds` (Number)
 - `location` (Block List) One of this check's own group's enrolled devices, relaying it from wherever that device actually is — not a hosted multi-region probe network, your own agents. Only meaningful for relay_mode = "relay". See min_failing_locations for the aggregation this activates. (see [below for nested schema](#nestedblock--location))
@@ -46,6 +47,21 @@ Manages a Rustinion synthetic (uptime) check: a single HTTP(S) or TCP request, a
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedatt--http_auth"></a>
+### Nested Schema for `http_auth`
+
+Optional:
+
+- `basic_auth_password` (String, Sensitive) HTTP Basic auth password. Stored encrypted, never returned.
+- `basic_auth_username` (String) HTTP Basic auth user name (no colon). Not combinable with `bearer_token`.
+- `bearer_token` (String, Sensitive) Sent as `Authorization: Bearer <token>` (for Horcrux: a JWT; a Horcrux API key goes in `headers` as `X-API-Key`). Stored encrypted, never returned. Not combinable with Basic auth.
+- `headers` (Map of String, Sensitive) Extra request headers (name => value). The values are secrets: stored encrypted, never returned by the API or shown in the UI.
+- `tls_ca_pem` (String) PEM certificate(s) of a private CA to trust *instead of* the system roots, for endpoints with a private or self-signed CA (for Horcrux: its `/api/tls/ca.pem`). Preferred over `tls_insecure_skip_verify`. https URLs only.
+- `tls_client_cert_pem` (String) Client certificate (PEM) for mutual TLS. Needs `tls_client_key_pem`.
+- `tls_client_key_pem` (String, Sensitive) Private key (PEM) of the client certificate. Stored encrypted, never returned. PKCS#8 (`BEGIN PRIVATE KEY`) is accepted everywhere; relayed checks and scrape targets also accept RSA/EC keys.
+- `tls_insecure_skip_verify` (Boolean) **Insecure.** Do not verify the server certificate at all: anyone on the network path can impersonate the endpoint and read the credentials sent to it. Use `tls_ca_pem` instead where you can. Not combinable with `tls_ca_pem`. Default false.
+
 
 <a id="nestedblock--location"></a>
 ### Nested Schema for `location`

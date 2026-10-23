@@ -15,6 +15,8 @@ type ScrapeTarget struct {
 	IntervalSecs int64             `json:"interval_secs"`
 	MaxSeries    int64             `json:"max_series"`
 	Tags         map[string]string `json:"tags"`
+	// Authentication and TLS options, flattened into the target's JSON.
+	HTTPAuth
 }
 
 // GroupCustomMetrics mirrors `GET/PUT /api/v1/customer/groups/{id}/custom-metrics`:
@@ -72,6 +74,9 @@ func (c *Client) GetGroupCustomMetrics(ctx context.Context, groupID string) (*Gr
 
 func (c *Client) PutGroupCustomMetrics(ctx context.Context, groupID string, p GroupCustomMetrics) (*GroupCustomMetrics, error) {
 	normalizeCustomMetrics(&p)
+	for i := range p.ScrapeTargets {
+		p.ScrapeTargets[i].HTTPAuth = p.ScrapeTargets[i].HTTPAuth.ForRequest()
+	}
 	// Read-only on the server; never send it.
 	p.MonitoringEnabled = false
 	var out GroupCustomMetrics

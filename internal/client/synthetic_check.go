@@ -85,6 +85,9 @@ type SyntheticCheck struct {
 	FailuresBeforeAlert int64                    `json:"failures_before_alert"`
 	Steps               []SyntheticCheckStep     `json:"steps"`
 	Locations           []SyntheticCheckLocation `json:"locations"`
+	// HTTPAuth: http checks only. Always sent (all-null clears); the
+	// response carries a secret-free view, absent when nothing is set.
+	HTTPAuth *HTTPAuth `json:"http_auth,omitempty"`
 }
 
 func (c *Client) CreateSyntheticCheck(ctx context.Context, check SyntheticCheck) (*SyntheticCheck, error) {

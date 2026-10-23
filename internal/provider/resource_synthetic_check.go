@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -89,6 +90,7 @@ type syntheticCheckResourceModel struct {
 	FailuresBeforeAlert types.Int64                   `tfsdk:"failures_before_alert"`
 	Step                []syntheticCheckStepModel     `tfsdk:"step"`
 	Location            []syntheticCheckLocationModel `tfsdk:"location"`
+	HTTPAuth            *httpAuthModel                `tfsdk:"http_auth"`
 }
 
 func (r *syntheticCheckResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -193,6 +195,11 @@ func (r *syntheticCheckResource) Schema(_ context.Context, _ resource.SchemaRequ
 				Computed:            true,
 				Default:             booldefault.StaticBool(true),
 				MarkdownDescription: "check_type = \"tls\": fail when the certificate isn't trusted or doesn't match the name. Set false for self-signed internal services (expiry is still checked). Default true.",
+			},
+			"http_auth": schema.SingleNestedAttribute{
+				Optional:            true,
+				Attributes:          httpAuthAttributes(),
+				MarkdownDescription: "check_type = \"http\" only: authentication and TLS options sent with every request (custom headers, bearer token or Basic auth, a custom CA certificate, a client certificate, or the explicit insecure skip-verify switch). Secrets are stored encrypted and never returned by the API. Credentials stay with the check's URL host: changing the target to another host drops credentials that are not re-sent. Relay checks need agent 0.1.257 or newer.",
 			},
 			"max_response_time_ms": schema.Int64Attribute{
 				Optional:            true,
@@ -317,7 +324,8 @@ func (r *syntheticCheckResource) Configure(_ context.Context, req resource.Confi
 	r.client = c
 }
 
-func syntheticCheckToClient(m syntheticCheckResourceModel) client.SyntheticCheck {
+func syntheticCheckToClient(ctx context.Context, m syntheticCheckResourceModel) (client.SyntheticCheck, diag.Diagnostics) {
+	auth, authDiags := httpAuthToClient(ctx, m.HTTPAuth)
 	steps := make([]client.SyntheticCheckStep, 0, len(m.Step))
 	for _, s := range m.Step {
 		headers := s.Headers.ValueString()
@@ -372,6 +380,7 @@ func syntheticCheckToClient(m syntheticCheckResourceModel) client.SyntheticCheck
 		locations = append(locations, loc)
 	}
 	return client.SyntheticCheck{
+		HTTPAuth:            &auth,
 		GroupID:             m.GroupID.ValueString(),
 		Name:                m.Name.ValueString(),
 		CheckType:           m.CheckType.ValueString(),
@@ -394,7 +403,7 @@ func syntheticCheckToClient(m syntheticCheckResourceModel) client.SyntheticCheck
 		FailuresBeforeAlert: int64OrDefault(m.FailuresBeforeAlert, 1),
 		Steps:               steps,
 		Locations:           locations,
-	}
+	}, authDiags
 }
 
 // int64OrDefault: a null/unknown attribute means the server default, never 0.
@@ -405,7 +414,12 @@ func int64OrDefault(v types.Int64, def int64) int64 {
 	return v.ValueInt64()
 }
 
-func syntheticCheckFromClient(check *client.SyntheticCheck) syntheticCheckResourceModel {
+func syntheticCheckFromClient(ctx context.Context, check *client.SyntheticCheck, prior *syntheticCheckResourceModel) (syntheticCheckResourceModel, diag.Diagnostics) {
+	var priorAuth *httpAuthModel
+	if prior != nil {
+		priorAuth = prior.HTTPAuth
+	}
+	auth, authDiags := httpAuthFromClient(ctx, check.HTTPAuth, priorAuth)
 	steps := make([]syntheticCheckStepModel, 0, len(check.Steps))
 	for _, s := range check.Steps {
 		headers := string(s.Headers)
@@ -459,7 +473,8 @@ func syntheticCheckFromClient(check *client.SyntheticCheck) syntheticCheckResour
 		FailuresBeforeAlert: types.Int64Value(check.FailuresBeforeAlert),
 		Step:                steps,
 		Location:            locations,
-	}
+		HTTPAuth:            auth,
+	}, authDiags
 }
 
 func (r *syntheticCheckResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -469,12 +484,19 @@ func (r *syntheticCheckResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	created, err := r.client.CreateSyntheticCheck(ctx, syntheticCheckToClient(plan))
+	in, diags := syntheticCheckToClient(ctx, plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	created, err := r.client.CreateSyntheticCheck(ctx, in)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating synthetic check", err.Error())
 		return
 	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, syntheticCheckFromClient(created))...)
+	out, diags := syntheticCheckFromClient(ctx, created, &plan)
+	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, out)...)
 }
 
 func (r *syntheticCheckResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -493,7 +515,9 @@ func (r *syntheticCheckResource) Read(ctx context.Context, req resource.ReadRequ
 		resp.Diagnostics.AddError("Error reading synthetic check", err.Error())
 		return
 	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, syntheticCheckFromClient(check))...)
+	out, diags := syntheticCheckFromClient(ctx, check, &state)
+	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, out)...)
 }
 
 func (r *syntheticCheckResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -508,12 +532,19 @@ func (r *syntheticCheckResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	updated, err := r.client.UpdateSyntheticCheck(ctx, state.ID.ValueString(), syntheticCheckToClient(plan))
+	in, diags := syntheticCheckToClient(ctx, plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	updated, err := r.client.UpdateSyntheticCheck(ctx, state.ID.ValueString(), in)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating synthetic check", err.Error())
 		return
 	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, syntheticCheckFromClient(updated))...)
+	out, diags := syntheticCheckFromClient(ctx, updated, &plan)
+	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, out)...)
 }
 
 func (r *syntheticCheckResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
