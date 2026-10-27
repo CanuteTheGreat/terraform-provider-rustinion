@@ -17,7 +17,7 @@ Manages where the organization's compliance findings go by severity, the ntfy pr
 
 ### Optional
 
-- `alert_digest_cadence` (String) every_sweep (as soon as flagged), daily or weekly (Mondays). Default every_sweep.
+- `alert_digest_cadence` (String) per_incident (one email per new critical/warning incident, the moment it fires), every_sweep (one digest of everything flagged), daily or weekly (Mondays). Default every_sweep.
 - `digest_hour` (Number) Hour of the day (0-23, in digest_timezone) daily and weekly digests go out. Default 9.
 - `digest_timezone` (String) IANA time zone of digest_hour, e.g. America/Los_Angeles. Default UTC.
 - `email_severities` (Set of String) Severities sent by email. Default all three.

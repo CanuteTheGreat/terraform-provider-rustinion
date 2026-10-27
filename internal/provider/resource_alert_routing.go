@@ -128,8 +128,8 @@ func (r *alertRoutingResource) Schema(_ context.Context, _ resource.SchemaReques
 			"ntfy_priority_digest":   ntfyPriorityAttribute("ntfy priority of a scheduled digest. Default min (silent).", "min"),
 			"alert_digest_cadence": schema.StringAttribute{
 				Optional: true, Computed: true, Default: stringdefault.StaticString("every_sweep"),
-				MarkdownDescription: "every_sweep (as soon as flagged), daily or weekly (Mondays). Default every_sweep.",
-				Validators:          []validator.String{stringvalidator.OneOf("every_sweep", "daily", "weekly")},
+				MarkdownDescription: "per_incident (one email per new critical/warning incident, the moment it fires), every_sweep (one digest of everything flagged), daily or weekly (Mondays). Default every_sweep.",
+				Validators:          []validator.String{stringvalidator.OneOf("per_incident", "every_sweep", "daily", "weekly")},
 			},
 			"summary_digest_cadence": schema.StringAttribute{
 				Optional: true, Computed: true, Default: stringdefault.StaticString("weekly"),
