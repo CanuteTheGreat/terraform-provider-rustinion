@@ -35,9 +35,9 @@ Manages a Rustinion custom dashboard: an ordered list of widgets (metric_chart, 
 Required:
 
 - `title` (String)
-- `widget_type` (String) One of: metric_chart, kpi_tile, alert_rule_status, log_search.
+- `widget_type` (String) One of: metric_chart, kpi_tile, alert_rule_status, log_search, problems.
 
 Optional:
 
-- `config` (String) The widget's config as a JSON string, shape depending on widget_type: metric_chart: {"metric_type": "...", "days": 7, "aggregation": "avg", "tag_key": "...", "tag_value": "..."} (aggregation/tag_key/tag_value all optional, tag_key+tag_value both-or-neither, only meaningful for a custom:<name> metric_type); kpi_tile: {"metric_type": "...", "window_minutes": 60, "aggregation": "avg", "tag_key": "...", "tag_value": "..."} (same optional fields as metric_chart); alert_rule_status: {} (no config); log_search: {"message_pattern": "...", "severity": "error"|"warning", "days": 7} (all fields optional).
+- `config` (String) The widget's config as a JSON string, shape depending on widget_type: metric_chart: {"metric_type": "...", "days": 7, "aggregation": "avg", "tag_key": "...", "tag_value": "..."} (aggregation/tag_key/tag_value all optional, tag_key+tag_value both-or-neither, only meaningful for a custom:<name> metric_type); kpi_tile: {"metric_type": "...", "window_minutes": 60, "aggregation": "avg", "tag_key": "...", "tag_value": "..."} (same optional fields as metric_chart); alert_rule_status: {} (no config); problems: {"use_device_variable": false} (optional; the open problems with the device named); log_search: {"message_pattern": "...", "severity": "error"|"warning", "days": 7} (all fields optional).
 - `width` (String) How much of a row this widget occupies: full (the default), half or third.

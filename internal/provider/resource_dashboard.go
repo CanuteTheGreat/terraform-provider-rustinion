@@ -93,7 +93,7 @@ func (r *dashboardResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 						},
 						"widget_type": schema.StringAttribute{
 							Required:            true,
-							MarkdownDescription: "One of: metric_chart, kpi_tile, alert_rule_status, log_search.",
+							MarkdownDescription: "One of: metric_chart, kpi_tile, alert_rule_status, log_search, problems.",
 						},
 						"width": schema.StringAttribute{
 							Optional:            true,
@@ -110,6 +110,7 @@ func (r *dashboardResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 								"metric_chart: {\"metric_type\": \"...\", \"days\": 7, \"aggregation\": \"avg\", \"tag_key\": \"...\", \"tag_value\": \"...\"} (aggregation/tag_key/tag_value all optional, tag_key+tag_value both-or-neither, only meaningful for a custom:<name> metric_type); " +
 								"kpi_tile: {\"metric_type\": \"...\", \"window_minutes\": 60, \"aggregation\": \"avg\", \"tag_key\": \"...\", \"tag_value\": \"...\"} (same optional fields as metric_chart); " +
 								"alert_rule_status: {} (no config); " +
+								"problems: {\"use_device_variable\": false} (optional; the open problems with the device named); " +
 								"log_search: {\"message_pattern\": \"...\", \"severity\": \"error\"|\"warning\", \"days\": 7} (all fields optional).",
 						},
 					},
