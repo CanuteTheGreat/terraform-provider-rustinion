@@ -43,6 +43,9 @@ is just a Terraform-shaped client for it.
 | `rustinion_group_package_cleanup` | `/api/v1/customer/groups/:id/package-cleanup` (per-group singleton: remove unneeded packages / old kernels, on by default) |
 | `rustinion_group_log_collection` | `/api/v1/customer/groups/:id/log-collection` (per-group singleton: device log collection on/off, severity, Windows channels, app log files, containers, syslog receiver, rate limit and buffer as `settings_json`) |
 | `rustinion_device_log_collection` | `/api/v1/customer/devices/:id/log-collection` (per-device override of the group's log collection, `settings_json`; `null`/destroy = inherit) |
+| `rustinion_remote_access_policy` | `/api/v1/customer/remote-access`, `/groups/:id/remote-access`, `/devices/:id/remote-access` (delegated remote access control at the organization, group or device level: remote desktop, each channel and the separate remote terminal, value inherit/on/off, locks, plus the read-only effective result and why) |
+| `rustinion_remote_access_dlp` | `/api/v1/customer/{remote-access,groups/:id/remote-access,devices/:id/remote-access}/dlp` (the data-loss policy at one level: preset or JSON policy for clipboard, files, drives, printing, USB, audio, recording and session limits; narrows only) |
+| `rustinion_remote_access_operator` | `/api/v1/customer/remote-access/operators[/:id]` (who may start remote sessions: allow / deny per person, channel and organization or group) |
 | `rustinion_device_package_cleanup` | `/api/v1/customer/devices/:id/package-cleanup` (per-device on / off / inherit) |
 | `rustinion_device_agent_update` | `/api/v1/customer/devices/:id/agent-update` (one device's agent self-update: `follow_group`, `auto`, `paused`, or `pinned` + `pinned_version`; destroy = follow_group) |
 | `rustinion_group_malware_scan` | `/api/v1/customer/groups/:id/malware-scan` (per-group singleton: signatures-only and excluded scan paths) |

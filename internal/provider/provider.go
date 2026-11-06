@@ -175,6 +175,9 @@ func (p *RustinionProvider) Resources(_ context.Context) []func() resource.Resou
 		NewMonitorTemplateResource,
 		NewMonitorTemplateLinkResource,
 		NewMonitorMacroOverrideResource,
+		NewRemoteAccessPolicyResource,
+		NewRemoteAccessOperatorResource,
+		NewRemoteAccessDLPResource,
 	}
 }
 
