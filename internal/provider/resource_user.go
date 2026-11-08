@@ -53,7 +53,7 @@ func (r *userResource) Metadata(_ context.Context, req resource.MetadataRequest,
 
 func (r *userResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Invites a tenant member — one user_roles row, joined with its underlying users row for email. Sends the same one-time password-set email the admin UI's own invite does (silently skipped if the server has no SMTP configured). email and group_id are fixed at invite time (no rename or move-to-a-different-group capability exists anywhere in this app); access_level (admin or read_only) can be changed in place at any time. Destroying this resource removes the role and revokes the user's sessions if this was their last remaining access anywhere.",
+		Description: "Invites a tenant member — one user_roles row, joined with its underlying users row for email. Sends the same one-time password-set email the admin UI's own invite does (silently skipped if the server has no SMTP configured). email and group_id are fixed at invite time (no rename or move-to-a-different-group capability exists anywhere in this app); access_level (admin, operator or read_only) can be changed in place at any time. Destroying this resource removes the role and revokes the user's sessions if this was their last remaining access anywhere.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -87,8 +87,8 @@ func (r *userResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString("admin"),
-				MarkdownDescription: "\"admin\" (default) or \"read_only\". Updatable in place at any time.",
-				Validators:          []validator.String{stringvalidator.OneOf("admin", "read_only")},
+				MarkdownDescription: "\"admin\" (default), \"operator\" (fleet operations only: no billing, users, settings, purge or keys) or \"read_only\". Updatable in place at any time.",
+				Validators:          []validator.String{stringvalidator.OneOf("admin", "operator", "read_only")},
 			},
 		},
 	}
