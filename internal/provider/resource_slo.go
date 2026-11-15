@@ -65,7 +65,7 @@ func (r *sloResource) Metadata(_ context.Context, req resource.MetadataRequest, 
 
 func (r *sloResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages a Rustinion SLO (service-level objective). See slo.rs in the main repo for attainment/error-budget computation. metric_type selects which fields apply: checkin_freshness/compliance_health/snmp_reachability need none of the optional fields below; custom_metric requires custom_metric_name, comparator, and good_threshold; alert_rule requires sli_alert_rule_id. There is no update endpoint for an SLO at all — every attribute here forces a replace.",
+		Description: "Manages a Rustinion SLO (service-level objective). See slo.rs in the main repo for attainment/error-budget computation. metric_type selects which fields apply: checkin_freshness/compliance_health/snmp_reachability/synthetic_uptime need none of the optional fields below; custom_metric requires custom_metric_name, comparator, and good_threshold; alert_rule requires sli_alert_rule_id. There is no update endpoint for an SLO at all — every attribute here forces a replace.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -89,9 +89,9 @@ func (r *sloResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 			},
 			"metric_type": schema.StringAttribute{
 				Required:            true,
-				MarkdownDescription: "One of: checkin_freshness, compliance_health, snmp_reachability, custom_metric, alert_rule.",
+				MarkdownDescription: "One of: checkin_freshness, compliance_health, snmp_reachability, custom_metric, alert_rule, synthetic_uptime.",
 				Validators: []validator.String{
-					stringvalidator.OneOf("checkin_freshness", "compliance_health", "snmp_reachability", "custom_metric", "alert_rule"),
+					stringvalidator.OneOf("checkin_freshness", "compliance_health", "snmp_reachability", "custom_metric", "alert_rule", "synthetic_uptime"),
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),

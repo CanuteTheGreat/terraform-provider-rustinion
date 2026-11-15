@@ -3,12 +3,12 @@
 page_title: "rustinion_slo Resource - rustinion"
 subcategory: ""
 description: |-
-  Manages a Rustinion SLO (service-level objective). See slo.rs in the main repo for attainment/error-budget computation. metric_type selects which fields apply: checkin_freshness/compliance_health/snmp_reachability need none of the optional fields below; custom_metric requires custom_metric_name, comparator, and good_threshold; alert_rule requires sli_alert_rule_id. There is no update endpoint for an SLO at all — every attribute here forces a replace.
+  Manages a Rustinion SLO (service-level objective). See slo.rs in the main repo for attainment/error-budget computation. metric_type selects which fields apply: checkin_freshness/compliance_health/snmp_reachability/synthetic_uptime need none of the optional fields below; custom_metric requires custom_metric_name, comparator, and good_threshold; alert_rule requires sli_alert_rule_id. There is no update endpoint for an SLO at all — every attribute here forces a replace.
 ---
 
 # rustinion_slo (Resource)
 
-Manages a Rustinion SLO (service-level objective). See slo.rs in the main repo for attainment/error-budget computation. metric_type selects which fields apply: checkin_freshness/compliance_health/snmp_reachability need none of the optional fields below; custom_metric requires custom_metric_name, comparator, and good_threshold; alert_rule requires sli_alert_rule_id. There is no update endpoint for an SLO at all — every attribute here forces a replace.
+Manages a Rustinion SLO (service-level objective). See slo.rs in the main repo for attainment/error-budget computation. metric_type selects which fields apply: checkin_freshness/compliance_health/snmp_reachability/synthetic_uptime need none of the optional fields below; custom_metric requires custom_metric_name, comparator, and good_threshold; alert_rule requires sli_alert_rule_id. There is no update endpoint for an SLO at all — every attribute here forces a replace.
 
 
 
@@ -18,7 +18,7 @@ Manages a Rustinion SLO (service-level objective). See slo.rs in the main repo f
 ### Required
 
 - `group_id` (String) ID of the group this SLO belongs to.
-- `metric_type` (String) One of: checkin_freshness, compliance_health, snmp_reachability, custom_metric, alert_rule.
+- `metric_type` (String) One of: checkin_freshness, compliance_health, snmp_reachability, custom_metric, alert_rule, synthetic_uptime.
 - `name` (String)
 - `target_percentage` (Number) Target attainment percentage, greater than 0 and at most 100 (e.g. 99.9).
 
