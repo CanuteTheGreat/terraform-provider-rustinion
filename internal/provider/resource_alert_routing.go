@@ -14,8 +14,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
@@ -60,6 +62,10 @@ type alertRoutingResourceModel struct {
 	SummaryDigestCadence types.String `tfsdk:"summary_digest_cadence"`
 	DigestHour           types.Int64  `tfsdk:"digest_hour"`
 	DigestTimezone       types.String `tfsdk:"digest_timezone"`
+
+	SummaryRecipientsSeparate types.Bool `tfsdk:"summary_recipients_separate"`
+	SummaryRecipients         types.List `tfsdk:"summary_recipients"`
+	SummaryNotifyAllAdmins    types.Bool `tfsdk:"summary_notify_all_admins"`
 }
 
 func (r *alertRoutingResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -145,6 +151,21 @@ func (r *alertRoutingResource) Schema(_ context.Context, _ resource.SchemaReques
 				Optional: true, Computed: true, Default: stringdefault.StaticString("UTC"),
 				MarkdownDescription: "IANA time zone of digest_hour, e.g. America/Los_Angeles. Default UTC.",
 			},
+			"summary_recipients_separate": schema.BoolAttribute{
+				Optional: true, Computed: true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				MarkdownDescription: "Send the scheduled digest, the summary email and the backups-only summary to `summary_recipients` instead of the main recipients. Emergencies and per-incident mail of true emergencies always use the main recipients; other per-incident notices follow this list. Default false (everything goes to the same people). Leave it out to keep whatever is set on the server.",
+			},
+			"summary_recipients": schema.ListAttribute{
+				Optional: true, Computed: true, ElementType: types.StringType,
+				PlanModifiers:       []planmodifier.List{listplanmodifier.UseStateForUnknown()},
+				MarkdownDescription: "Addresses for the scheduled mail while `summary_recipients_separate` is true (an agents' inbox, for example). An empty list means nobody by email for that mail (it stays on the dashboard). Empty when not separate.",
+			},
+			"summary_notify_all_admins": schema.BoolAttribute{
+				Optional: true, Computed: true,
+				PlanModifiers:       []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
+				MarkdownDescription: "While routed separately, also email every admin of the organization? Unset on the server = same as `notify_all_admins`.",
+			},
 		},
 	}
 }
@@ -211,12 +232,38 @@ func alertRoutingToClient(ctx context.Context, m alertRoutingResourceModel) (cli
 		a.DigestHour = m.DigestHour.ValueInt64()
 	}
 	a.DigestTimezone = strOr(m.DigestTimezone, a.DigestTimezone)
+	// The summary routing is sent only when the configuration (or state) has a value: leaving it out
+	// never overwrites what is set on the server.
+	a.SummaryRecipientsSeparate = nil
+	if !m.SummaryRecipientsSeparate.IsNull() && !m.SummaryRecipientsSeparate.IsUnknown() {
+		v := m.SummaryRecipientsSeparate.ValueBool()
+		a.SummaryRecipientsSeparate = &v
+	}
+	if !m.SummaryRecipients.IsNull() && !m.SummaryRecipients.IsUnknown() {
+		var list []string
+		diags.Append(m.SummaryRecipients.ElementsAs(ctx, &list, false)...)
+		if list == nil {
+			list = []string{}
+		}
+		a.SummaryRecipients = &list
+	}
+	if !m.SummaryNotifyAllAdmins.IsNull() && !m.SummaryNotifyAllAdmins.IsUnknown() {
+		v := m.SummaryNotifyAllAdmins.ValueBool()
+		a.SummaryNotifyAllAdmins = &v
+	}
 	return a, diags
 }
 
 func alertRoutingFromClient(ctx context.Context, a *client.AlertRouting) (alertRoutingResourceModel, diag.Diagnostics) {
 	recipients, diags := types.ListValueFrom(ctx, types.StringType, a.ExtraRecipients)
-	return alertRoutingResourceModel{
+	summary := []string{}
+	if a.SummaryRecipients != nil {
+		summary = *a.SummaryRecipients
+	}
+	summaryList, d2 := types.ListValueFrom(ctx, types.StringType, summary)
+	diags.Append(d2...)
+	separate := a.SummaryRecipientsSeparate != nil && *a.SummaryRecipientsSeparate
+	m := alertRoutingResourceModel{
 		ID:                   types.StringValue(alertRoutingID),
 		NotifyEmail:          types.BoolValue(a.NotifyEmail),
 		NotifyAllAdmins:      types.BoolValue(a.NotifyAllAdmins),
@@ -232,7 +279,11 @@ func alertRoutingFromClient(ctx context.Context, a *client.AlertRouting) (alertR
 		SummaryDigestCadence: types.StringValue(a.SummaryDigestCadence),
 		DigestHour:           types.Int64Value(a.DigestHour),
 		DigestTimezone:       types.StringValue(a.DigestTimezone),
-	}, diags
+	}
+	m.SummaryRecipientsSeparate = types.BoolValue(separate)
+	m.SummaryRecipients = summaryList
+	m.SummaryNotifyAllAdmins = types.BoolPointerValue(a.SummaryNotifyAllAdmins)
+	return m, diags
 }
 
 func (r *alertRoutingResource) put(ctx context.Context, m alertRoutingResourceModel) (*alertRoutingResourceModel, diag.Diagnostics) {

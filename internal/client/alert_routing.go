@@ -31,12 +31,29 @@ type AlertRouting struct {
 	SummaryDigestCadence string         `json:"summary_digest_cadence"`
 	DigestHour           int64          `json:"digest_hour"`
 	DigestTimezone       string         `json:"digest_timezone"`
+	// Who gets the scheduled digest, the summary and the backups-only
+	// summary when that differs from the urgent and per-incident mail
+	// (for example the agents' inbox). The pointers are nil when unset:
+	// a PUT then leaves the server's setting alone, so a configuration
+	// that does not mention them never overwrites what is set elsewhere.
+	SummaryRecipientsSeparate *bool     `json:"summary_recipients_separate,omitempty"`
+	SummaryRecipients         *[]string `json:"summary_recipients,omitempty"`
+	SummaryNotifyAllAdmins    *bool     `json:"summary_notify_all_admins,omitempty"`
 }
+
+func boolPtr(b bool) *bool { return &b }
 
 // DefaultAlertRouting: email every admin with every severity, push
 // destinations (webhook, PagerDuty) critical only, loud criticals and
 // silent digests on ntfy, digests at 09:00 UTC.
 func DefaultAlertRouting() AlertRouting {
+	a := defaultAlertRouting()
+	// Defaults put the scheduled mail back on the main recipient list.
+	a.SummaryRecipientsSeparate = boolPtr(false)
+	return a
+}
+
+func defaultAlertRouting() AlertRouting {
 	return AlertRouting{
 		NotifyEmail:          true,
 		NotifyAllAdmins:      true,

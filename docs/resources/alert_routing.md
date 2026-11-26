@@ -30,6 +30,9 @@ Manages where the organization's compliance findings go by severity, the ntfy pr
 - `ntfy_priority_warning` (String) ntfy priority of a warning sent on its own. Default low (silent).
 - `pagerduty_severities` (Set of String) Severities that trigger PagerDuty. Default critical only.
 - `summary_digest_cadence` (String) The summary email of finding types set to "summary email only": daily or weekly. Default weekly.
+- `summary_notify_all_admins` (Boolean) While routed separately, also email every admin of the organization? Unset on the server = same as `notify_all_admins`.
+- `summary_recipients` (List of String) Addresses for the scheduled mail while `summary_recipients_separate` is true (an agents' inbox, for example). An empty list means nobody by email for that mail (it stays on the dashboard). Empty when not separate.
+- `summary_recipients_separate` (Boolean) Send the scheduled digest, the summary email and the backups-only summary to `summary_recipients` instead of the main recipients. Emergencies and per-incident mail of true emergencies always use the main recipients; other per-incident notices follow this list. Default false (everything goes to the same people). Leave it out to keep whatever is set on the server.
 - `webhook_severities` (Set of String) Severities sent to the digest webhook (Slack-compatible or ntfy). Default critical only.
 
 ### Read-Only
